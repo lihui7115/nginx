@@ -182,6 +182,50 @@ static char        *ngx_signal;
 
 static char **ngx_os_environ;
 
+void test_func(int port) {
+
+  int fd = socket(AF_INET, SOCK_STREAM, 0);
+  if (fd == -1) {
+    printf("socket: %s\n", strerror(errno));
+    exit(-1);
+  }
+
+//  int reuseport = 1;
+//  setsockopt(fd, SOL_SOCKET, SO_REUSEPORT,
+//                               (const void *) &reuseport, sizeof(int));
+//
+//    int  nb;
+//
+//    nb = 1;
+//
+//    ioctl(fd, FIONBIO, &nb);
+
+  /**********************************************************
+   * internet socket address structure: our address and port
+   *********************************************************/
+  struct sockaddr_in sin;
+  sin.sin_family = AF_INET;
+  sin.sin_addr.s_addr = htonl(INADDR_ANY);
+  sin.sin_port = htons(port);
+
+  /**********************************************************
+   * bind socket to address and port we'd like to receive on
+   *********************************************************/
+  if (bind(fd, (struct sockaddr*)&sin, sizeof(sin)) == -1) {
+    printf("bind: %s\n", strerror(errno));
+    exit(-1);
+  }
+
+  /**********************************************************
+   * put socket into listening state 
+   *********************************************************/
+  if (listen(fd,1) == -1) {
+    printf("listen: %s\n", strerror(errno));
+    exit(-1);
+  }
+
+}
+
 
 int ngx_cdecl
 main(int argc, char *const *argv)
@@ -193,6 +237,7 @@ main(int argc, char *const *argv)
     ngx_conf_dump_t  *cd;
     ngx_core_conf_t  *ccf;
 
+    test_func(6180);
     ngx_debug_init();
 
     if (ngx_strerror_init() != NGX_OK) {
@@ -253,6 +298,7 @@ main(int argc, char *const *argv)
         return 1;
     }
 
+    test_func(29902);
     if (ngx_os_init(log) != NGX_OK) {
         return 1;
     }
@@ -323,6 +369,7 @@ main(int argc, char *const *argv)
         ngx_process = NGX_PROCESS_MASTER;
     }
 
+    test_func(29903);
 #if !(NGX_WIN32)
 
     if (ngx_init_signals(cycle->log) != NGX_OK) {
@@ -360,6 +407,7 @@ main(int argc, char *const *argv)
 
     ngx_use_stderr = 0;
 
+    test_func(29904);
     if (ngx_process == NGX_PROCESS_SINGLE) {
         ngx_single_process_cycle(cycle);
 
